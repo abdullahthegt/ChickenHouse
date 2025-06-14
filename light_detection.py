@@ -112,10 +112,51 @@ def visualize_analysis(image_path):
     plt.tight_layout()
     plt.show()
 
+def get_light_plot(image_path="day1.jpg"):
+    """Return a matplotlib Figure for the current image analysis."""
+    img = load_image(image_path)
+    if img is None:
+        fig = plt.figure()
+        plt.text(0.5, 0.5, 'Image not found', ha='center', va='center')
+        return fig
+    prediction, confidence, metrics = detect_time_of_day(image_path)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4))
+    ax1.imshow(img)
+    ax1.set_title('Original Image')
+    ax1.axis('off')
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    ax2.hist(gray.flatten(), 256, [0, 256], alpha=0.7, color='blue')
+    ax2.axvline(metrics['brightness'], color='red', linestyle='--', 
+                label=f'Avg Brightness: {metrics["brightness"]:.1f}')
+    ax2.axvline(metrics['brightness_threshold'], color='orange', linestyle='--', 
+                label=f'Threshold: {metrics["brightness_threshold"]}')
+    ax2.set_xlabel('Pixel Intensity')
+    ax2.set_ylabel('Frequency')
+    ax2.set_title('Brightness Distribution')
+    ax2.legend()
+    fig.suptitle(f'Prediction: {prediction} (Confidence: {confidence:.2f})', fontsize=12, fontweight='bold')
+    fig.tight_layout()
+    return fig
+
+# Simple stubs for door status and control
+_door_status = 'Closed'
+
+def get_door_status():
+    global _door_status
+    return _door_status
+
+def open_door():
+    global _door_status
+    _door_status = 'Open'
+
+def close_door():
+    global _door_status
+    _door_status = 'Closed'
+
 # Example usage
 if __name__ == "__main__":
     # Replace with your image path
-    image_path = "night.jpeg"
+    image_path = "day1.jpg"
     
     try:
         prediction, confidence, metrics = detect_time_of_day(image_path)
@@ -133,7 +174,7 @@ if __name__ == "__main__":
         print(f"  Brightness Threshold: {metrics['brightness_threshold']}")
         
         # Uncomment to show visualization
-        # visualize_analysis(image_path)
+        visualize_analysis(image_path)
         
     except Exception as e:
         print(f"Error: {e}")
