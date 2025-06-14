@@ -3,6 +3,8 @@ import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
 
+DEFAULT_IMAGE_PATH = "./images/day1.jpg"
+
 def load_image(image_path):
     """Load an image using OpenCV"""
     try:
@@ -29,7 +31,7 @@ def analyze_color_temperature(img):
     
     return red_ratio, blue_ratio
 
-def detect_time_of_day(image_path, brightness_threshold=80):
+def detect_time_of_day(image_path=None, brightness_threshold=80):
     """
     Detect if image shows morning or night scene
     
@@ -40,6 +42,9 @@ def detect_time_of_day(image_path, brightness_threshold=80):
     Returns:
         tuple: (prediction, confidence, metrics)
     """
+    
+    if image_path is None:
+        image_path = DEFAULT_IMAGE_PATH
     
     # Load image
     img = load_image(image_path)
@@ -77,8 +82,11 @@ def detect_time_of_day(image_path, brightness_threshold=80):
     
     return prediction, confidence, metrics
 
-def visualize_analysis(image_path):
+def visualize_analysis(image_path=None):
     """Create visualization of the analysis"""
+    if image_path is None:
+        image_path = DEFAULT_IMAGE_PATH
+    
     img = load_image(image_path)
     if img is None:
         return
@@ -112,8 +120,11 @@ def visualize_analysis(image_path):
     plt.tight_layout()
     plt.show()
 
-def get_light_plot(image_path="day1.jpg"):
+def get_light_plot(image_path=None):
     """Return a matplotlib Figure for the current image analysis."""
+    if image_path is None:
+        image_path = DEFAULT_IMAGE_PATH
+    
     img = load_image(image_path)
     if img is None:
         fig = plt.figure()
@@ -155,9 +166,7 @@ def close_door():
 
 # Example usage
 if __name__ == "__main__":
-    # Replace with your image path
-    image_path = "day1.jpg"
-    
+    image_path = DEFAULT_IMAGE_PATH
     try:
         prediction, confidence, metrics = detect_time_of_day(image_path)
         

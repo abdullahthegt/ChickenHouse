@@ -7,6 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import threading
 import time
 import light_detection
+from light_detection import DEFAULT_IMAGE_PATH
 import datetime
 
 class ChickenHouseGUI:
@@ -60,7 +61,7 @@ class ChickenHouseGUI:
     def update_status_from_image(self):
         # Analyze image and update door status
         try:
-            prediction, confidence, metrics = light_detection.detect_time_of_day("day1.jpg")
+            prediction, confidence, metrics = light_detection.detect_time_of_day(DEFAULT_IMAGE_PATH)
             if prediction and ("morning" in prediction.lower()):
                 light_detection.open_door()
                 self.status_var.set("Open")
@@ -106,7 +107,7 @@ class ChickenHouseGUI:
     def show_plot(self):
         for widget in self.plot_frame.winfo_children():
             widget.destroy()
-        fig = light_detection.get_light_plot("day1.jpg")
+        fig = light_detection.get_light_plot(DEFAULT_IMAGE_PATH)
         canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
