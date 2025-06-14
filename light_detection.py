@@ -158,7 +158,6 @@ def get_door_status():
 
 try:
     from gpiozero import Servo
-    from gpiozero.pins.pigpio import PiGPIOFactory
     RPI_AVAILABLE = True
 except ImportError:
     RPI_AVAILABLE = False
@@ -171,8 +170,7 @@ def _init_servo():
     if not RPI_AVAILABLE or _servo is not None:
         return
     try:
-        factory = PiGPIOFactory()
-        _servo = Servo(SERVO_PIN, pin_factory=factory, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
+        _servo = Servo(SERVO_PIN, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
     except Exception as e:
         print(f"Servo init error: {e}")
         _servo = None
