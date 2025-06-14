@@ -157,41 +157,50 @@ def get_door_status():
     return _door_status
 
 try:
-    from gpiozero import Servo
+    import RPi.GPIO as GPIO
     RPI_AVAILABLE = True
 except ImportError:
     RPI_AVAILABLE = False
 
 SERVO_PIN = 17  # GPIO17
-_servo = None
+_pwm = None
+_servo_initialized = False
+
+SERVO_OPEN_DUTY = 2   # Open
+SERVO_CLOSED_DUTY = 12  # Closed
 
 def _init_servo():
-    global _servo
-    if not RPI_AVAILABLE or _servo is not None:
+    global _servo_initialized, _pwm
+    if not RPI_AVAILABLE or _servo_initialized:
         return
-    try:
-        _servo = Servo(SERVO_PIN, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
-    except Exception as e:
-        print(f"Servo init error: {e}")
-        _servo = None
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(SERVO_PIN, GPIO.OUT)
+    _pwm = GPIO.PWM(SERVO_PIN, 50)  # 50Hz
+    _pwm.start(SERVO_CLOSED_DUTY)
+    _servo_initialized = True
 
-def _set_servo(value):
+def _set_servo(duty):
     if not RPI_AVAILABLE:
-        print(f"[Mock] Set servo to value {value}")
+        print(f"[Mock] Set servo to duty {duty}")
         return
     _init_servo()
-    if _servo:
-        _servo.value = value
+    if _pwm:
+        _pwm.ChangeDutyCycle(duty)
 
 def open_door():
     global _door_status
     _door_status = 'Open'
-    _set_servo(-1)  # Open (min)
+    _set_servo(SERVO_OPEN_DUTY)
 
 def close_door():
     global _door_status
     _door_status = 'Closed'
-    _set_servo(1)   # Closed (max)
+    _set_servo(SERVO_CLOSED_DUTY)
+
+def cleanup_servo():
+    if RPI_AVAILABLE and _servo_initialized and _pwm:
+        _pwm.stop()
+        GPIO.cleanup()
 
 # Example usage
 if __name__ == "__main__":
