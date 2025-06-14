@@ -156,13 +156,44 @@ def get_door_status():
     global _door_status
     return _door_status
 
+try:
+    from gpiozero import Servo
+    from gpiozero.pins.pigpio import PiGPIOFactory
+    RPI_AVAILABLE = True
+except ImportError:
+    RPI_AVAILABLE = False
+
+SERVO_PIN = 17  # GPIO17
+_servo = None
+
+def _init_servo():
+    global _servo
+    if not RPI_AVAILABLE or _servo is not None:
+        return
+    try:
+        factory = PiGPIOFactory()
+        _servo = Servo(SERVO_PIN, pin_factory=factory, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
+    except Exception as e:
+        print(f"Servo init error: {e}")
+        _servo = None
+
+def _set_servo(value):
+    if not RPI_AVAILABLE:
+        print(f"[Mock] Set servo to value {value}")
+        return
+    _init_servo()
+    if _servo:
+        _servo.value = value
+
 def open_door():
     global _door_status
     _door_status = 'Open'
+    _set_servo(-1)  # Open (min)
 
 def close_door():
     global _door_status
     _door_status = 'Closed'
+    _set_servo(1)   # Closed (max)
 
 # Example usage
 if __name__ == "__main__":

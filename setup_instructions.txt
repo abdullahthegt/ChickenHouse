@@ -1,0 +1,11 @@
+1. Install uv from https://github.com/astral-sh/uv (follow their instructions).
+2. In your project directory, run:
+
+   uv pip install -r requirements.txt
+
+This will automatically install all required libraries for your project, including GPIO and image processing dependencies.
+
+Note: On Raspberry Pi, you may need to enable the pigpio daemon for gpiozero to work:
+
+   sudo systemctl start pigpiod
+   sudo systemctl enable pigpiod
