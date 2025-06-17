@@ -31,3 +31,9 @@ The light detection.py file takes an image as an input and detects the time of t
     '
     python chickenhouse_gui.py
     '
+
+
+## Interface Preview
+
+![alt text](image.png)
+
