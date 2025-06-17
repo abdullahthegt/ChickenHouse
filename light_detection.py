@@ -198,10 +198,16 @@ def close_door():
     _set_servo(SERVO_CLOSED_DUTY)
 
 def cleanup_servo():
-    if RPI_AVAILABLE and _servo_initialized and _chip is not None:
-        lgpio.tx_pwm(_chip, SERVO_PIN, 50, 0)  # Stop PWM
-        lgpio.gpio_free(_chip, SERVO_PIN)  # Release GPIO pin
-        lgpio.gpiochip_close(_chip)  # Close GPIO chip
+    global _servo_initialized, _pwm
+    if RPI_AVAILABLE:
+        try:
+            if _pwm:
+                _pwm.stop()
+            GPIO.cleanup()
+        except Exception as e:
+            print(f"GPIO cleanup error: {e}")
+    _servo_initialized = False
+    _pwm = None
 
 # Example usage
 if __name__ == "__main__":
