@@ -2,6 +2,11 @@ import cv2
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
+try:
+    import lgpio
+    RPI_AVAILABLE = True
+except ImportError:
+    RPI_AVAILABLE = False
 
 DEFAULT_IMAGE_PATH = "./images/day1.jpg"
 
@@ -156,27 +161,20 @@ def get_door_status():
     global _door_status
     return _door_status
 
-try:
-    import RPi.GPIO as GPIO
-    RPI_AVAILABLE = True
-except ImportError:
-    RPI_AVAILABLE = False
-
 SERVO_PIN = 17  # GPIO17
-_pwm = None
+_chip = None
 _servo_initialized = False
 
-SERVO_OPEN_DUTY = 2   # Open
-SERVO_CLOSED_DUTY = 12  # Closed
+SERVO_OPEN_DUTY = 2   # Open (2% duty cycle, ~1ms pulse)
+SERVO_CLOSED_DUTY = 12  # Closed (12% duty cycle, ~2ms pulse)
 
 def _init_servo():
-    global _servo_initialized, _pwm
+    global _servo_initialized, _chip
     if not RPI_AVAILABLE or _servo_initialized:
         return
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(SERVO_PIN, GPIO.OUT)
-    _pwm = GPIO.PWM(SERVO_PIN, 50)  # 50Hz
-    _pwm.start(SERVO_CLOSED_DUTY)
+    _chip = lgpio.gpiochip_open(0)  # Open GPIO chip 0 (default for Pi 5)
+    lgpio.gpio_claim_output(_chip, SERVO_PIN)  # Configure pin as output
+    lgpio.tx_pwm(_chip, SERVO_PIN, 50, SERVO_CLOSED_DUTY)  # Initialize PWM at 50Hz, closed position
     _servo_initialized = True
 
 def _set_servo(duty):
@@ -184,8 +182,8 @@ def _set_servo(duty):
         print(f"[Mock] Set servo to duty {duty}")
         return
     _init_servo()
-    if _pwm:
-        _pwm.ChangeDutyCycle(duty)
+    if _chip is not None:
+        lgpio.tx_pwm(_chip, SERVO_PIN, 50, duty)  # Set PWM duty cycle
 
 def open_door():
     global _door_status
@@ -198,9 +196,10 @@ def close_door():
     _set_servo(SERVO_CLOSED_DUTY)
 
 def cleanup_servo():
-    if RPI_AVAILABLE and _servo_initialized and _pwm:
-        _pwm.stop()
-        GPIO.cleanup()
+    if RPI_AVAILABLE and _servo_initialized and _chip is not None:
+        lgpio.tx_pwm(_chip, SERVO_PIN, 50, 0)  # Stop PWM
+        lgpio.gpio_free(_chip, SERVO_PIN)  # Release GPIO pin
+        lgpio.gpiochip_close(_chip)  # Close GPIO chip
 
 # Example usage
 if __name__ == "__main__":
@@ -221,12 +220,12 @@ if __name__ == "__main__":
         print(f"  Brightness Threshold: {metrics['brightness_threshold']}")
         
         # Uncomment to show visualization
-        visualize_analysis(image_path)
+        # visualize_analysis(image_path)
         
     except Exception as e:
         print(f"Error: {e}")
         print("Make sure to install required packages:")
         print("pip install opencv-python pillow matplotlib numpy")
-
-
-# zv76GM@LQNdAPqL
+        print("For servo control, install: sudo apt install python3-rpi-lgpio")
+    finally:
+        cleanup_servo()
