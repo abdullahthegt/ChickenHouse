@@ -166,7 +166,7 @@ _chip = None
 _servo_initialized = False
 
 SERVO_OPEN_DUTY = 2   # Open (2% duty cycle, ~1ms pulse)
-SERVO_CLOSED_DUTY = 12  # Closed (12% duty cycle, ~2ms pulse)
+SERVO_CLOSED_DUTY = 8  # Closed (8% duty cycle, ~2ms pulse)
 
 def _init_servo():
     global _servo_initialized, _chip

@@ -112,7 +112,15 @@ class ChickenHouseGUI:
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
+    def on_close(self):
+        try:
+            light_detection.cleanup_servo()
+        except Exception:
+            pass
+        self.root.destroy()
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = ChickenHouseGUI(root)
+    root.protocol("WM_DELETE_WINDOW", app.on_close)
     root.mainloop()
