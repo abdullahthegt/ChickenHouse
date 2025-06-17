@@ -1,27 +1,24 @@
-import RPi.GPIO as GPIO
+import lgpio
 from time import sleep
 
 # === Setup ===
 SERVO_PIN = 17  # GPIO17 (physical pin 11)
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(SERVO_PIN, GPIO.OUT)
+# Set GPIO mode to BCM
+lgpio.gpiochip_open(0)  # Open GPIO chip (default for Pi 5)
+lgpio.gpio_claim_output(SERVO_PIN)  # Configure pin as output
 
 # Set PWM to 50Hz (standard for SG90)
-pwm = GPIO.PWM(SERVO_PIN, 50)
-pwm.start(0)
+pwm = lgpio.tx_pwm(SERVO_PIN, 50, 0)  # Initialize PWM at 50Hz, 0% duty cycle
 
 # === Functions ===
 def rotate_servo(angle):
     """
     Rotate SG90 servo to the given angle (0 to 180 degrees).
     """
-    duty = 2 + (angle / 18)  # Map angle to duty cycle
-    GPIO.output(SERVO_PIN, True)
-    pwm.ChangeDutyCycle(duty)
-    sleep(0.5)
-    GPIO.output(SERVO_PIN, False)
-    pwm.ChangeDutyCycle(0)
+    duty = 2 + (angle / 18)  # Map angle to duty cycle (2% to 12% for 0-180°)
+    lgpio.tx_pwm(SERVO_PIN, 50, duty)  # Set PWM duty cycle
+    sleep(0.5)  # Allow servo to reach position
 
 # === Main Script ===
 try:
@@ -41,5 +38,6 @@ except KeyboardInterrupt:
     print("Program stopped manually")
 
 finally:
-    pwm.stop()
-    GPIO.cleanup()
+    lgpio.tx_pwm(SERVO_PIN, 50, 0)  # Stop PWM signal
+    lgpio.gpio_free(SERVO_PIN)  # Release GPIO pin
+    lgpio.gpiochip_close(0)  # Close GPIO chip
