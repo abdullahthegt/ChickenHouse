@@ -188,11 +188,13 @@ def _set_servo(duty):
 def open_door():
     global _door_status
     _door_status = 'Open'
+    print('Door status: OPEN (motor should be opening)')
     _set_servo(SERVO_OPEN_DUTY)
 
 def close_door():
     global _door_status
     _door_status = 'Closed'
+    print('Door status: CLOSED (motor should be closing)')
     _set_servo(SERVO_CLOSED_DUTY)
 
 def cleanup_servo():
