@@ -20,10 +20,23 @@ class ChickenHouseGUI:
         self.time_var = tk.StringVar()
         self.create_widgets()
         self.update_clock()
-        # --- Live camera feed additions ---
-        self.cap = cv2.VideoCapture(1)  # Try external camera first
+
+        # Initialize USB Webcam (Logitech E3500)
+        self.cap = cv2.VideoCapture("/dev/video0", cv2.CAP_V4L2) 
         if not self.cap.isOpened():
-            self.cap = cv2.VideoCapture(0)  # Fallback to laptop camera
+            print("Failed to open /dev/video0, trying /dev/video1...")
+            self.cap = cv2.VideoCapture("/dev/video1", cv2.CAP_V4L2)  
+            if not self.cap.isOpened():
+                messagebox.showerror("Error", "Could not open webcam! Check permissions or try another camera.")
+                self.cap = None
+                return
+
+        # Optimize settings for Logitech E3500
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # Set width
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)  # Set height
+        self.cap.set(cv2.CAP_PROP_FPS, 30)  # Try 30 FPS
+        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M','J','P','G'))  # MJPEG support
+
         self.current_frame = None
         self.last_detection_time = 0
         self.detection_delay = 10  # seconds
