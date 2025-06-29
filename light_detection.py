@@ -98,7 +98,7 @@ def detect_time_of_day_from_frame(frame, brightness_threshold=80):
     Returns:
         tuple: (prediction, confidence, metrics)
     """
-    if frame is None:
+    if frame is None: #testing new data
         return None, 0, {}
     avg_brightness = analyze_brightness(frame)
     red_ratio, blue_ratio = analyze_color_temperature(frame)
