@@ -87,6 +87,40 @@ def detect_time_of_day(image_path=None, brightness_threshold=80):
     
     return prediction, confidence, metrics
 
+def detect_time_of_day_from_frame(frame, brightness_threshold=80):
+    """
+    Detect if frame shows morning or night scene (from numpy array, not file)
+    
+    Args:
+        frame: RGB image as numpy array
+        brightness_threshold: Threshold for brightness (0-255)
+    
+    Returns:
+        tuple: (prediction, confidence, metrics)
+    """
+    if frame is None:
+        return None, 0, {}
+    avg_brightness = analyze_brightness(frame)
+    red_ratio, blue_ratio = analyze_color_temperature(frame)
+    metrics = {
+        'brightness': avg_brightness,
+        'red_ratio': red_ratio,
+        'blue_ratio': blue_ratio,
+        'brightness_threshold': brightness_threshold
+    }
+    if avg_brightness < brightness_threshold:
+        prediction = "Night"
+        confidence = min((brightness_threshold - avg_brightness) / brightness_threshold, 1.0)
+    else:
+        if red_ratio > blue_ratio * 1.2:
+            prediction = "Morning/Golden Hour"
+            confidence = 0.7 + (red_ratio - blue_ratio) * 0.3
+        else:
+            prediction = "Day/Morning"
+            confidence = 0.6 + (avg_brightness - brightness_threshold) / 255 * 0.4
+    confidence = min(confidence, 1.0)
+    return prediction, confidence, metrics
+
 def visualize_analysis(image_path=None):
     """Create visualization of the analysis"""
     if image_path is None:
@@ -141,6 +175,31 @@ def get_light_plot(image_path=None):
     ax1.set_title('Original Image')
     ax1.axis('off')
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    ax2.hist(gray.flatten(), 256, [0, 256], alpha=0.7, color='blue')
+    ax2.axvline(metrics['brightness'], color='red', linestyle='--', 
+                label=f'Avg Brightness: {metrics["brightness"]:.1f}')
+    ax2.axvline(metrics['brightness_threshold'], color='orange', linestyle='--', 
+                label=f'Threshold: {metrics["brightness_threshold"]}')
+    ax2.set_xlabel('Pixel Intensity')
+    ax2.set_ylabel('Frequency')
+    ax2.set_title('Brightness Distribution')
+    ax2.legend()
+    fig.suptitle(f'Prediction: {prediction} (Confidence: {confidence:.2f})', fontsize=12, fontweight='bold')
+    fig.tight_layout()
+    return fig
+
+def get_light_plot_from_frame(frame, brightness_threshold=80):
+    """Return a matplotlib Figure for the current frame analysis."""
+    if frame is None:
+        fig = plt.figure()
+        plt.text(0.5, 0.5, 'Frame not found', ha='center', va='center')
+        return fig
+    prediction, confidence, metrics = detect_time_of_day_from_frame(frame, brightness_threshold)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4))
+    ax1.imshow(frame)
+    ax1.set_title('Current Frame')
+    ax1.axis('off')
+    gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     ax2.hist(gray.flatten(), 256, [0, 256], alpha=0.7, color='blue')
     ax2.axvline(metrics['brightness'], color='red', linestyle='--', 
                 label=f'Avg Brightness: {metrics["brightness"]:.1f}')
